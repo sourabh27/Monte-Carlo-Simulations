@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-#use conda python 
+#use conda python
 import os
 import numpy as np
-from tqdm import tqdm 
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib import patches as pt
 rundir = os.getcwd()
@@ -52,7 +52,7 @@ def calcEnergy_woPBC(lattice):
             if i == 0:
                Si = lattice[i]
                Nj = lattice[(i+1)]
-               energy += -J*Si*Nj
+               energy += -Si*Nj
                print(Si*Nj)
             elif i == (N-1):
                Si = lattice[i]
@@ -68,32 +68,35 @@ def calcEnergy_woPBC(lattice):
 
 # Monte carlo move
 def mc(lattice, beta):
-    for i in range(len(lattice)):
-        N = len(lattice)
-        r_n = np.random.randint(0,(N-1))
-        Su = lattice[i]
+    for i in range(N):
+        r_n = np.random.randint(0,N)
+        Sa = lattice[r_n]
         Nj = lattice[(i+1)%N] + lattice[(i-1)%N]
-        dE = 2*J*Su*Nj
+        dE = 2*J*Sa*Nj
         if dE < 0.:
-           Su *= -1
+           lattice[r_n] = -Sa
         elif np.random.uniform() < np.exp(-dE*beta):
-           Su *= -1
-        lattice[i] = Su
+           lattice[r_n] = -Sa
     return lattice
 
 #temperature arrays
 Temp_min = 0.05
-T = np.linspace(Temp_min,Temp_max,30)
+T = np.linspace(Temp_min,Temp_max,50)
 T_iter = int(len(T))
 
-MC_step = 100
-EQ_step = 100
- 
+MC_step = 2000
+EQ_step = 20
+
 #list to store final values
 F_energys = []
 F_Cps = []
 F_Magnetizations = []
 F_Chis = []
+dF_energys = []
+dF_Cps = []
+dF_Magnetizations = []
+dF_Chis = []
+
 #Temperature = []
 
 #Main code
@@ -106,64 +109,74 @@ for step in tqdm(range(T_iter)):
         Cp_list = []
         Magnetization_list = []
         Chi_list = []
-         
+
         mc(lattice, beta)
         E = E_sq = M = M_sq = 0
         for i in range(MC_step):
             mc(lattice, beta)
-            energy = calcEnergy_wPBC(lattice) 
+            energy = calcEnergy_wPBC(lattice)
             mag = abs(Mag(lattice))
             E += energy
             E_sq += energy**2
             M += mag
             M_sq += mag**2
-        
+
         E_mean = E/MC_step
         E_sq_mean = E_sq/MC_step
         M_mean = M/MC_step
         M_sq_mean = M_sq/MC_step
-        
+
         Energy = float(E_mean/float(N))
         Cp = beta**2 * ((E_sq_mean - E_mean**2)/float(N))
         Magnetization = M_mean/float(N)
         Chi = beta * ((M_sq_mean - M_mean**2)/float(N))
-       
+
         #store the above values as list
         Energy_list.append(Energy); Cp_list.append(Cp); Magnetization_list.append(Magnetization); Chi_list.append(Chi)
 
-    #to store list with temperature variation 
+    #to store list with temperature variation
     F_energy = np.mean(Energy_list)
     F_energys.append(F_energy)
+    dF_energy = np.std(Energy_list)
+    dF_energys.append(dF_energy)
+
     F_Cp = np.mean(Cp_list)
     F_Cps.append(F_Cp)
+    dF_Cp = np.mean(Cp_list)
+    dF_Cps.append(dF_Cp)
+
     F_Magnetization = abs(np.mean(Magnetization_list))
     F_Magnetizations.append(F_Magnetization)
+    dF_Magnetization = abs(np.mean(Magnetization_list))
+    dF_Magnetizations.append(dF_Magnetization)
+
     F_Chi = np.mean(Chi_list)
     F_Chis.append(F_Chi)
+    dF_Chi = np.mean(Chi_list)
+    dF_Chis.append(dF_Chi)
 
-f = plt.figure(figsize=(18, 10)); # plot the calculated values    
+
+f = plt.figure(figsize=(18, 10)); # plot the calculated values
 
 sp =  f.add_subplot(2, 2, 1 );
-plt.scatter(T, F_energys, s=30, marker='o', color='Red')
+plt.scatter(T, F_energys, s=10, marker='o', color='Red')
 plt.xlabel("Temperature (T)", fontsize=10);
-plt.ylabel("Energy", fontsize=10); 
+plt.ylabel("Energy", fontsize=10);
 
 sp =  f.add_subplot(2, 2, 2 );
-plt.scatter(T, F_Magnetizations, s=30, marker='o', color='Blue')
-plt.xlabel("Temperature (T)", fontsize=10); 
-plt.ylabel("Magnetization ", fontsize=10);  
+plt.scatter(T, F_Magnetizations, s=10, marker='o', color='Blue')
+plt.xlabel("Temperature (T)", fontsize=10);
+plt.ylabel("Magnetization ", fontsize=10);
 
 sp =  f.add_subplot(2, 2, 3 );
-plt.scatter(T, F_Cps, s=30, marker='o', color='Green')
-plt.xlabel("Temperature (T)", fontsize=10);  
-plt.ylabel("Specific Heat ", fontsize=10); 
+plt.scatter(T, F_Cps, s=10, marker='o', color='Green')
+plt.xlabel("Temperature (T)", fontsize=10);
+plt.ylabel("Specific Heat ", fontsize=10);
 
 sp =  f.add_subplot(2, 2, 4 );
-plt.scatter(T, F_Chis, s=30, marker='o', color='Cyan')
-plt.xlabel("Temperature (T)", fontsize=10); 
-plt.ylabel("Susceptibility", fontsize=10);  
-      
-  
+plt.scatter(T, F_Chis, s=10, marker='o', color='Cyan')
+plt.xlabel("Temperature (T)", fontsize=10);
+plt.ylabel("Susceptibility", fontsize=10);
+
+
 plt.show()
-
-
