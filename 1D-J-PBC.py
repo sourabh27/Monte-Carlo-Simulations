@@ -14,7 +14,7 @@ if Temp_max < 0.05:
    print("please enter a value greater than 0.06")
 
 N = int(input("size of lattice = "))
-J = input("exchange paramter = ")
+J = float(input("exchange paramter = "))
 
 
 #create lattice for the simulation
@@ -41,7 +41,7 @@ def calcEnergy_wPBC(lattice):
             N = len(lattice)
             Si = lattice[i]
             Nj = lattice[(i+1)%N] + lattice[(i-1)%N]
-            energy += -Si*Nj
+            energy += -J*Si*Nj
     return energy/2.
 
 def calcEnergy_woPBC(lattice):
@@ -52,7 +52,7 @@ def calcEnergy_woPBC(lattice):
             if i == 0:
                Si = lattice[i]
                Nj = lattice[(i+1)]
-               energy += -Si*Nj
+               energy += -J*Si*Nj
                print(Si*Nj)
             elif i == (N-1):
                Si = lattice[i]
@@ -73,7 +73,7 @@ def mc(lattice, beta):
         r_n = np.random.randint(0,(N-1))
         Su = lattice[i]
         Nj = lattice[(i+1)%N] + lattice[(i-1)%N]
-        dE = 2*Su*Nj
+        dE = 2*J*Su*Nj
         if dE < 0.:
            Su *= -1
         elif np.random.uniform() < np.exp(-dE*beta):
@@ -87,7 +87,7 @@ T = np.linspace(Temp_min,Temp_max,30)
 T_iter = int(len(T))
 
 MC_step = 100
-EQ_step = 10
+EQ_step = 100
  
 #list to store final values
 F_energys = []
@@ -146,22 +146,22 @@ f = plt.figure(figsize=(18, 10)); # plot the calculated values
 sp =  f.add_subplot(2, 2, 1 );
 plt.scatter(T, F_energys, s=30, marker='o', color='Red')
 plt.xlabel("Temperature (T)", fontsize=10);
-plt.ylabel("Energy", fontsize=10);         plt.axis('tight');
+plt.ylabel("Energy", fontsize=10); 
 
 sp =  f.add_subplot(2, 2, 2 );
 plt.scatter(T, F_Magnetizations, s=30, marker='o', color='Blue')
 plt.xlabel("Temperature (T)", fontsize=10); 
-plt.ylabel("Magnetization ", fontsize=10);   plt.axis('tight');
+plt.ylabel("Magnetization ", fontsize=10);  
 
 sp =  f.add_subplot(2, 2, 3 );
 plt.scatter(T, F_Cps, s=30, marker='o', color='Green')
 plt.xlabel("Temperature (T)", fontsize=10);  
-plt.ylabel("Specific Heat ", fontsize=10);   plt.axis('tight');   
+plt.ylabel("Specific Heat ", fontsize=10); 
 
 sp =  f.add_subplot(2, 2, 4 );
 plt.scatter(T, F_Chis, s=30, marker='o', color='Cyan')
 plt.xlabel("Temperature (T)", fontsize=10); 
-plt.ylabel("Susceptibility", fontsize=10);   plt.axis('tight');
+plt.ylabel("Susceptibility", fontsize=10);  
       
   
 plt.show()
